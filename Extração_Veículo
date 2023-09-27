@@ -1,0 +1,168 @@
+from selenium import webdriver
+import time
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.binary_location = r'C:\Users\administrator\AppData\Local\Google\Chrome SxS\Application\chrome.exe'
+
+driver = webdriver.Chrome(options=chrome_options)
+
+driver.get('https://eris.hinova.com.br/sga/sgav4_loma/v5/login.php')
+
+driver.find_element('xpath', 
+                      '//*[@id="usuario"]').send_keys("")
+driver.find_element('xpath',
+                      '//*[@id="senha"]').send_keys("")
+driver.find_element('xpath',
+                      '//*[@id="myModal"]/div/div/div[2]/div/div/div/button').click()
+driver.find_element('xpath',
+                      '//*[@id="login"]/button[1]').click()
+time.sleep(10)
+
+driver.find_element('xpath', '//*[@id="navbar10"]').click()
+driver.find_element('xpath', '//*[@id="navbarTogglerDemo01"]/ul/li[11]/ul/li[2]/a').click()
+driver.find_element('xpath', '//*[@id="DataCadastro"]').send_keys('01/11/2017')
+driver.find_element('xpath', '//*[@id="DataCadastroFinal"]').send_keys('19/09/2021')
+driver.find_element('xpath', '//*[@id="chkNome"]').click()
+driver.find_element('xpath', '//*[@id="chkMatricula"]').click()
+driver.find_element('xpath', '//*[@id="chkIDVeiculo"]').click()
+driver.find_element('xpath', '//*[@id="chkChassi"]').click()
+driver.find_element('xpath', '//*[@id="chkSituacao"]').click()
+driver.find_element('xpath', '//*[@id="chkModelo"]').click()
+driver.find_element('xpath', '//*[@id="chkAnoMod"]').click()
+driver.find_element('xpath', '//*[@id="chkCategoria"]').click()
+driver.find_element('xpath', '//*[@id="chkTipoVeiculo"]').click()
+driver.find_element('xpath', '//*[@id="chkCor"]').click()
+driver.find_element('xpath', '//*[@id="chkValorFipe"]').click()
+driver.find_element('xpath', '//*[@id="chkPorcentagemFipeProtegido"]').click()
+driver.find_element('xpath', '//*[@id="chkCooperativa"]').click()
+driver.find_element('xpath', '//*[@id="chkVoluntario"]').click()
+driver.find_element('xpath', '//*[@id="chkCodigoFipe"]').click()
+driver.find_element('xpath', '//*[@id="chkQuantPortas"]').click()
+driver.find_element('xpath', '//*[@id="chkCombustivel"]').click()
+driver.find_element('xpath', '//*[@id="chkAlertaUsuario"]').click()
+driver.find_element('xpath', '//*[@id="divFormaExibicao"]/table/tbody/tr[2]/td/div/table/tbody/tr[4]/td[2]/div/input').click()
+driver.find_element('xpath', '//*[@id="pbSalvar"]').click()
+
+import os
+import pandas as pd
+import unicodedata
+
+diretorio = r'C:\Users\Administrator\Downloads'
+arq_xls = [arquivo for arquivo in os.listdir(diretorio) if arquivo.endswith('.xls')]
+arq_xls.sort(key=lambda x: os.path.getmtime(os.path.join(diretorio, x)))
+
+if arq_xls:
+    arquivo_path = os.path.join(diretorio, arq_xls[-1])
+    
+    dados = pd.read_html(arquivo_path)
+    
+    if dados:
+        dados_format = dados[0]
+        
+        dados_format['Placa'] = dados_format['Placa'].astype(str)  
+        dados_format = dados_format[~dados_format['Placa'].str.startswith('Resumo')]
+        dados_format = dados_format[~dados_format['Placa'].str.startswith('Usuário:')]
+        dados_format = dados_format[~dados_format['Placa'].str.startswith('Total de cotas encontradas:')]
+        
+        def limpar_texto(texto):
+            texto = ''.join(c for c in unicodedata.normalize('NFKD', texto) if not unicodedata.combining(c))
+            texto_limpo = ''.join(c for c in texto if c.isalnum() or c.isspace())
+            return texto_limpo
+            
+        colunas = ['Modelo']
+        
+        def format_valor(valor):
+            valor_fipe = valor.replace("R$", "").replace(",", ".")
+            return valor_fipe
+        
+        dados_format['Valor FIPE Veiculo'] = dados_format['Valor FIPE Veiculo'].apply(format_valor)
+        
+        for coluna in colunas:
+            dados_format[coluna] = dados_format[coluna].apply(limpar_texto)
+            
+        dados_format['Data Cadastro'] = pd.to_datetime(dados_format['Data Cadastro'], format='%d/%m/%Y').dt.date
+        
+        alt_colunas = {
+            'Placa': 'PLACA',
+            'Data Cadastro': 'DATA_CADASTRO',
+            'Chassi':'CHASSI',
+            'Matrícula Associado':'ID_ASSOCIADO',
+            'Cod. Veículo': 'ID_VEÍCULO',
+            'Situação Veículo': 'SITUACAO',
+            'Modelo': 'MODELO',
+            'Ano Mod.': 'ANO_MODELO',
+            'Categoria': 'CATEGORIA',
+            'Cor': 'COR',
+            'Valor FIPE Veiculo': 'VALOR_FIPE',
+            'Código Fipe': 'CÓD_FIPE',
+            'N° de Portas': 'PORTAS',
+            'Combustível': 'COMBUSTÍVEL',
+            'Porcentagem Fipe Protegido':'PORCENTAGEM',
+            'Cooperativa':'COOPERATIVA',
+            'Voluntário':'VOLUNTARIO',
+            'Tipo Veículo':'TIPO_VEICULO',
+            'Alerta Usuario':'ALERTA',
+            
+            
+            
+        }
+        
+        dados_format = dados_format.rename(columns=alt_colunas)
+        dados_format = dados_format.fillna('')
+        
+dados_format.head()
+
+import mysql.connector
+
+
+conn = mysql.connector.connect(
+    host='',
+    user='',
+    password='',
+    database=''
+)
+
+
+cursor = conn.cursor()
+
+cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
+
+sql = """
+    INSERT INTO SGA_VEICULOS (PLACA, DATA_CADASTRO, ID_ASSOCIADO, ID_VEÍCULO, CHASSI, SITUACAO, MODELO, ANO_MODELO, 
+    CATEGORIA, TIPO_VEICULO, COR, VALOR_FIPE, PORCENTAGEM, COOPERATIVA, VOLUNTARIO, CÓD_FIPE, PORTAS, COMBUSTÍVEL, ALERTA) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON DUPLICATE KEY UPDATE
+    PLACA = VALUES(PLACA),
+    DATA_CADASTRO = VALUES(DATA_CADASTRO),
+    ID_ASSOCIADO = VALUES(ID_ASSOCIADO),
+    ID_VEÍCULO = VALUES(ID_VEÍCULO),
+    SITUACAO = VALUES(SITUACAO),
+    MODELO = VALUES(MODELO),
+    ANO_MODELO = VALUES(ANO_MODELO),
+    CATEGORIA = VALUES(CATEGORIA),
+    COR = VALUES(COR),
+    VALOR_FIPE = VALUES(VALOR_FIPE),
+    PORCENTAGEM = VALUES(PORCENTAGEM),
+    CÓD_FIPE = VALUES(CÓD_FIPE),
+    PORTAS = VALUES(PORTAS),
+    COMBUSTÍVEL = VALUES(COMBUSTÍVEL),
+    ALERTA = VALUES(ALERTA),
+    COOPERATIVA = VALUES(COOPERATIVA),
+    VOLUNTARIO = VALUES(VOLUNTARIO),
+    TIPO_VEICULO = VALUES(TIPO_VEICULO)
+"""
+    
+valores = [tuple(row) for _, row in dados_format.iterrows()]
+
+try:
+    cursor.executemany(sql, valores)
+    cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
+    conn.commit()
+    print("Inserção concluída com sucesso!")
+except Exception as e:
+    conn.rollback()
+    print(f"Erro durante a inserção: {e}")
+finally:
+    cursor.close()
+
+conn.close()

@@ -1,0 +1,165 @@
+from selenium import webdriver
+import time
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.binary_location = r'C:\Users\administrator\AppData\Local\Google\Chrome SxS\Application\chrome.exe'
+
+driver = webdriver.Chrome(options=chrome_options)
+
+driver.get('https://eris.hinova.com.br/sga/sgav4_loma/v5/login.php')
+
+driver.find_element('xpath', 
+                      '//*[@id="usuario"]').send_keys("")
+driver.find_element('xpath',
+                      '//*[@id="senha"]').send_keys("")
+driver.find_element('xpath',
+                      '//*[@id="myModal"]/div/div/div[2]/div/div/div/button').click()
+driver.find_element('xpath',
+                      '//*[@id="login"]/button[1]').click()
+time.sleep(10)
+driver.find_element('xpath', '//*[@id="navbar10"]').click()
+driver.find_element('xpath','//*[@id="navbarTogglerDemo01"]/ul/li[11]/ul/li[1]/a').click()
+driver.find_element('xpath','//*[@id="DataCadastro"]').send_keys('01122022')
+driver.find_element('xpath','//*[@id="DataCadastroFinal"]').send_keys('30092023')
+driver.find_element('xpath','//*[@id="chkTRegional"]').click
+driver.find_element('xpath','//*[@id="chkNome"]').click()
+driver.find_element('xpath','//*[@id="chkMatricula"]').click()
+driver.find_element('xpath','//*[@id="chkDataCadastro"]').click()
+driver.find_element('xpath','//*[@id="chkDataCadastro"]').click()
+driver.find_element('xpath','//*[@id="chkNome"]').click()
+driver.find_element('xpath','//*[@id="chkSituacao"]').click()
+driver.find_element('xpath','//*[@id="chkCpf"]').click()
+driver.find_element('xpath','//*[@id="chkDataNascimento"]').click()
+driver.find_element('xpath','//*[@id="chkCnh"]').click()
+driver.find_element('xpath','//*[@id="chkBairro"]').click()
+driver.find_element('xpath','//*[@id="chkCidade"]').click()
+driver.find_element('xpath','//*[@id="chkEstado"]').click()
+driver.find_element('xpath','//*[@id="chkEmail"]').click()
+driver.find_element('xpath','//*[@id="chkTelefoneCelular"]').click()
+driver.find_element('xpath','//*[@id="chkTelefoneCelularAux"]').click()
+driver.find_element('xpath','/html/body/table/tbody/tr[3]/td/form/span[3]/table/tbody/tr[2]/td/div/table/tbody/tr[4]/td[2]/div/input').click()
+driver.find_element('xpath','//*[@id="pbSalvar"]').click()
+
+############################################################################################################################
+
+import os
+import pandas as pd
+import unicodedata
+
+diretorio = r'C:\Users\Administrator\Downloads'
+arq_xls = [arquivo for arquivo in os.listdir(diretorio) if arquivo.endswith('.xls')]
+arq_xls.sort(key=lambda x: os.path.getmtime(os.path.join(diretorio, x)))
+
+if arq_xls:
+    arquivo_path = os.path.join(diretorio, arq_xls[-1])
+    
+    dados = pd.read_html(arquivo_path)
+    
+    if dados: 
+        dados_format = dados[0]
+    
+        def limpar_texto(texto):
+            # Remove acentos
+            texto_sem_acentos = ''.join(c for c in unicodedata.normalize('NFKD', texto) if not unicodedata.combining(c))
+            texto_limpo = ''.join(c for c in texto_sem_acentos if c.isalnum() or c.isspace())
+            return texto_limpo
+
+        colunas_para_limpar = ['Nome', 'Cidade', 'Bairro']  
+        for coluna in colunas_para_limpar:
+            dados_format[coluna] = dados_format[coluna].apply(limpar_texto)
+            
+    
+if dados:
+    dados_format['Data Cadastro'] = dados_format['Data Cadastro'].str.replace('00/00/0000', '01/01/1901', regex=False)
+    dados_format['Data Cadastro'] = dados_format['Data Cadastro'].str.replace('21/12/7195', '21/12/1975', regex=False)
+    dados_format['Data Cadastro'] = dados_format['Data Cadastro'].str.replace('07/07/7987', '07/07/1987', regex=False)
+
+    # Valide o formato da data (DD/MM/AAAA) usando uma expressão regular
+    data_formato_valido_cadastro = dados_format['Data Cadastro'].str.match(r'\d{2}/\d{2}/\d{4}')
+
+    # Atribua a data padrão '01/01/1901' apenas para datas inválidas na coluna 'Data Cadastro'
+    dados_format['Data Cadastro'] = dados_format['Data Cadastro'].where(data_formato_valido_cadastro, '01/01/1901')
+
+    dados_format['Data Cadastro'] = pd.to_datetime(dados_format['Data Cadastro'], format='%d/%m/%Y').dt.date
+    dados_format['Data Nascimento'] = dados_format['Data Nascimento'].str.replace('00/00/0000', '01/01/1901', regex=False)
+    dados_format['Data Nascimento'] = dados_format['Data Nascimento'].str.replace('21/12/7195', '21/12/1975', regex=False)
+    dados_format['Data Nascimento'] = dados_format['Data Nascimento'].str.replace('07/07/7987', '07/07/1987', regex=False)
+
+    # Valide o formato da data (DD/MM/AAAA) usando uma expressão regular
+    data_formato_valido = dados_format['Data Nascimento'].str.match(r'\d{2}/\d{2}/\d{4}')
+
+    # Atribua a data padrão '01/01/1901' apenas para datas inválidas
+    c
+
+    # Converta a coluna 'Data Nascimento' para um objeto de data/hora
+    dados_format['Data Nascimento'] = pd.to_datetime(dados_format['Data Nascimento'], format='%d/%m/%Y').dt.date
+
+    # Exclua linhas com valores NaN
+    dados_format.dropna(inplace=True)
+
+    novo_nome_colunas = {'Matrícula': 'ID_ASSOCIADO',
+                         'Data Cadastro': 'DATA_CADASTRO',
+                         'Nome': 'NOME',
+                         'Situacao': 'SITUAÇÃO',
+                         'CPF/CNPJ': 'CPF',
+                         'Data Nascimento': 'DATA_NASCIMENTO',
+                         'CNH': 'CNH',
+                         'Bairro': 'BAIRRO',
+                         'Cidade': 'CIDADE',
+                         'UF': 'ESTADO',
+                         'Telefone Celular': 'TEL_CELULAR',
+                         'Telefone Celular Auxiliar': 'TEL_AUXILIAR'}
+
+    dados_format = dados_format.rename(columns=novo_nome_colunas)
+        
+        
+
+############################################################################################################################
+
+import mysql.connector
+
+
+conn = mysql.connector.connect(
+    host='',
+    user='',
+    password='',
+    database=''
+)
+
+
+cursor = conn.cursor()
+
+cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
+
+sql = """
+INSERT INTO SGA_ASSOCIADOS (ID_ASSOCIADO, DATA_CADASTRO, NOME, SITUAÇÃO, CPF, DATA_NASCIMENTO, CNH, BAIRRO, CIDADE, ESTADO, Email, TEL_CELULAR, TEL_AUXILIAR) 
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+ON DUPLICATE KEY UPDATE
+ID_ASSOCIADO = VALUES(ID_ASSOCIADO),
+DATA_CADASTRO = VALUES(DATA_CADASTRO),
+NOME = VALUES(NOME),
+SITUAÇÃO = VALUES(SITUAÇÃO),
+CPF = VALUES(CPF),
+DATA_NASCIMENTO = VALUES(DATA_NASCIMENTO),
+CNH = VALUES(CNH),
+BAIRRO = VALUES(BAIRRO),
+ESTADO = VALUES (ESTADO),
+Email = VALUES(Email),
+TEL_CELULAR = VALUES(TEL_CELULAR),
+TEL_AUXILIAR = VALUES(TEL_AUXILIAR)
+"""
+
+valores = [tuple(row) for _, row in dados_format.iterrows()]
+
+try:
+    cursor.executemany(sql, valores)
+    cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
+    conn.commit()
+    print("Inserção concluída com sucesso!")
+except Exception as e:
+    conn.rollback()
+    print(f"Erro durante a inserção: {e}")
+finally:
+    cursor.close()
+
+conn.close()

@@ -1,0 +1,162 @@
+from selenium import webdriver
+import time
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.binary_location = r'C:\Users\administrator\AppData\Local\Google\Chrome SxS\Application\chrome.exe'
+
+driver = webdriver.Chrome(options=chrome_options)
+
+driver.get('https://eris.hinova.com.br/sga/sgav4_loma/v5/login.php')
+
+driver.find_element('xpath', 
+                      '//*[@id="usuario"]').send_keys("")
+driver.find_element('xpath',
+                      '//*[@id="senha"]').send_keys("")
+driver.find_element('xpath',
+                      '//*[@id="myModal"]/div/div/div[2]/div/div/div/button').click()
+driver.find_element('xpath',
+                      '//*[@id="login"]/button[1]').click()
+time.sleep(5)
+driver.find_element('xpath',
+                      '//*[@id="navbar10"]').click()
+
+driver.find_element('xpath','//*[@id="navbarTogglerDemo01"]/ul/li[11]/ul/li[9]/a').click()
+driver.find_element('xpath','//*[@id="navbarTogglerDemo01"]/ul/li[11]/ul/li[9]/ul/li/a').click()
+driver.find_element('xpath','//*[@id="dadosEvento"]/div[1]/div[1]/input[1]').send_keys()
+driver.find_element('xpath','//*[@id="dadosEvento"]/div[1]/div[1]/input[2]').send_keys()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[1]/div[5]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[1]/div[6]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[1]/div[7]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[1]/div[8]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[1]/div[10]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[1]/div[16]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[1]/div[17]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[1]/div[18]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[1]/div[20]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[3]/div[1]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[3]/div[4]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[3]/div[5]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[4]/div[1]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[4]/div[3]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[4]/div[8]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[4]/div[15]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[4]/div[14]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[4]/div[13]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[4]/div[17]/label').click()
+driver.find_element('xpath','//*[@id="chkNormal"]/fieldset[4]/div[2]/label').click()
+driver.find_element('xpath','//*[@id="divRelatorio"]/div[9]/div/div[2]/div[2]/div/label/input').click()
+driver.find_element('xpath','//*[@id="pbGerar"]').click()
+
+import pandas as pd
+import os
+import unicodedata
+
+diretorio = r'C:\Users\Administrator\Downloads'
+
+arq_xls = [arquivo for arquivo in os.listdir(diretorio) if arquivo.endswith('.xls')]
+arq_xls.sort(key=lambda x: os.path.getmtime(os.path.join(diretorio, x)))
+
+if arq_xls:
+    arquivo_path = os.path.join(diretorio, arq_xls[-1])
+    
+    dfs = pd.read_html(arquivo_path)
+    
+    indice = 0
+    df = dfs[indice]
+    linhas = [1,2,4]
+    
+    df = df.drop(linhas)
+    df.reset_index(drop=True, inplace=True)
+    df = df.drop(0)
+    df.reset_index(drop=True, inplace=True)
+    
+if 'VALOR REPARO' in df.columns:
+    df['VALOR REPARO'] = df['VALOR REPARO'].str.replace(r'[^0-9.,]','', regex=True)
+    df['VALOR REPARO'] = df['VALOR REPARO'].str.replace(r'\.', '', regex=True)
+    df['VALOR REPARO'] = df['VALOR REPARO'].str.replace(',', '.', regex=True)
+    df['VALOR REPARO'] = df['VALOR REPARO'].astype(float)
+    
+if 'PROTOCOLO' in df.columns:
+    df['PROTOCOLO'] = df['PROTOCOLO'].astype(int)
+    
+
+if 'MATRICULA ASSOCIADO' in df.columns:
+    df['MATRICULA ASSOCIADO'] = df['MATRICULA ASSOCIADO'].astype(int)
+    
+
+
+if 'DATA EVENTO' in df.columns:
+    df['DATA EVENTO'] = df['DATA EVENTO'].str.replace('00/00/0000', '01/01/1901', regex=False)
+    df['DATA EVENTO'] = df['DATA EVENTO'].str.extract(r'(\d{2}/\d{2}/\d{4})', expand=False).fillna('01/01/1901')
+    df['DATA EVENTO'] = pd.to_datetime(df['DATA EVENTO'], format='%d/%m/%Y').dt.date
+
+if 'DATA NASCIMENTO' in df.columns:
+    df['DATA NASCIMENTO'] = df['DATA NASCIMENTO'].str.replace('00/00/0000', '01/01/1901', regex=False)
+    df['DATA NASCIMENTO'] = df['DATA NASCIMENTO'].str.extract(r'(\d{2}/\d{2}/\d{4})', expand=False).fillna('01/01/1901')
+    df['DATA NASCIMENTO'] = pd.to_datetime(df['DATA NASCIMENTO'], format='%d/%m/%Y').dt.date
+    
+
+alt_colunas = {
+    'HORA EVENTO':'HORA_EVENTO',
+    'DATA EVENTO':'DATA_EVENTO',
+    'EVENTO CIDADE':'CIDADE_EVENTO',
+    'EVENTO ESTADO':'ESTADO_EVENTO',
+    'EVENTO BAIRRO':'BAIRRO_EVENTO',
+    'MOTIVO EVENTO':'MOTIVO_EVENTO',
+    'TIPO EVENTO':'TIPO_EVENTO',
+    'SITUACAO EVENTO':'SITUACAO_EVENTO',
+    'VALOR REPARO':'VALOR_REPARO',
+    'MATRICULA ASSOCIADO':'ID_ASSOCIADO',
+    'SEXO':'SEXO_ASSOCIADO',
+    'DATA NASCIMENTO':'NASCIMENTO_ASSOCIADO',
+    'NOME TERCEIRO':'NOME_TERCEIRO',
+    'SEXO TERCEIRO':'SEXO_TERCEIRO',
+    'CIDADE TERCEIRO':'CIDADE_TERCEIRO',
+    'MODELO VEICULO TERCEIRO':'MODELO_VEICULO_TERCEIRO',
+    'TIPO VEICULO TERCEIRO':'TIPO_VEICULO_TERCEIRO',
+    'MARCA VEICULO TERCEIRO':'MARCA_VEICULO_TERCEIRO',
+    'ANO MODELO TERCEIRO':'ANO_MODELO_TERCEIRO',
+    'DATA NASCIMENTO TERCEIRO':'NASCIMENTO_TERCEIRO',
+    'AÃÃES':'ACOES'   
+}
+
+df = df.rename(columns=alt_colunas)
+df = df.fillna('')
+
+import mysql.connector
+
+
+conn = mysql.connector.connect(
+    host='',
+    user='',
+    password='',
+    database=''
+)
+
+
+cursor = conn.cursor()
+
+cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
+
+delete_sql = "DELETE FROM DIM_EVENTOS_1"
+cursor.execute(delete_sql)
+
+sql = """
+INSERT INTO SGA_EVENTOS (PROTOCOLO, DATA_EVENTO, HORA_EVENTO, CIDADE_EVENTO, ESTADO_EVENTO, BAIRRO_EVENTO, MOTIVO_EVENTO, TIPO_EVENTO, SITUACAO_EVENTO, VALOR_REPARO, ID_ASSOCIADO, SEXO_ASSOCIADO, NASCIMENTO_ASSOCIADO, NOME_TERCEIRO, SEXO_TERCEIRO, CIDADE_TERCEIRO, MODELO_VEICULO_TERCEIRO, ANO_MODELO_TERCEIRO, TIPO_VEICULO_TERCEIRO, MARCA_VEICULO_TERCEIRO, NASCIMENTO_TERCEIRO, ACOES)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+"""
+
+valores = [tuple(row) for _, row in df.iterrows()]
+
+try:
+    cursor.executemany(sql, valores)
+    cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
+    conn.commit()
+    print("Inserção concluída com sucesso!")
+except Exception as e:
+    conn.rollback()
+    print(f"Erro durante a inserção: {e}")
+finally:
+    cursor.close()
+
+conn.close()
