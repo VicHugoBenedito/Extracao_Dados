@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from selenium import webdriver
 import time
 
@@ -148,3 +149,143 @@ finally:
     cursor.close()
 
 conn.close()
+=======
+from selenium import webdriver
+import time
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.binary_location = r''
+
+driver = webdriver.Chrome(options=chrome_options)
+
+driver.get('')
+
+driver.find_element('xpath', 
+                      '//*[@id="usuario"]').send_keys("")
+driver.find_element('xpath',
+                      '//*[@id="senha"]').send_keys("")
+driver.find_element('xpath',
+                      '//*[@id="myModal"]/div/div/div[2]/div/div/div/button').click()
+driver.find_element('xpath',
+                      '//*[@id="login"]/button[1]').click()
+time.sleep(5)
+driver.find_element('xpath',
+                      '//*[@id="navbar10"]').click()
+
+driver.find_element('xpath','//*[@id="navbarTogglerDemo01"]/ul/li[11]/ul/li[3]/a').click()
+driver.find_element('xpath','/html/body/table/tbody/tr[3]/td/form/div/fieldset/table/tbody/tr/td/div[1]/table/tbody/tr[2]/td/div/table[1]/tbody/tr[2]/td/div/table/tbody/tr[17]/td[2]/div/input[1]').send_keys("10092023")
+driver.find_element('xpath','//*[@id="DataVencimentoOriginalFinal"]').send_keys('10092023')
+driver.find_element('xpath','//*[@id="chkTTipoBoletoAll"]').click()
+driver.find_element('xpath','//*[@id="chkTipoBoletoAll24"]').click()
+driver.find_element('xpath','//*[@id="chkTipoBoletoAll5"]').click()
+driver.find_element('xpath','//*[@id="chkNome"]').click()
+driver.find_element('xpath','//*[@id="chkMatricula"]').click()
+driver.find_element('xpath','//*[@id="chkDvNossoNumero"]').click()
+driver.find_element('xpath','//*[@id="chkValor"]').click()
+driver.find_element('xpath','//*[@id="chkDataPagamento"]').click()
+driver.find_element('xpath','//*[@id="chkValorPagamento"]').click()
+driver.find_element('xpath','//*[@id="chkDataEmissao"]').click()
+driver.find_element('xpath','//*[@id="chkTipoBaixa"]').click()
+driver.find_element('xpath','//*[@id="chkSituacao"]').click()
+driver.find_element('xpath','//*[@id="chkSituacao"]').click()
+driver.find_element('xpath','/html/body/table/tbody/tr[3]/td/form/div/fieldset/table/tbody/tr/td/div[1]/table/tbody/tr[2]/td/div/span[1]/table[3]/tbody/tr[2]/td/div/table/tbody/tr[5]/td[2]/div/input').click()
+driver.find_element('xpath','//*[@id="pbSalvar"]').click()
+
+janelas = driver.window_handles
+driver.switch_to.window(janelas[-1])
+driver.find_element('xpath','//*[@id="boletosTable_wrapper"]/div[1]/a[2]/span').click()
+
+time.sleep(10)
+
+
+import os
+import pandas as pd
+
+
+diretorio = r'C:\Users\administrator\Downloads'
+arq_csv = [arquivo for arquivo in os.listdir(diretorio) if arquivo.endswith('.csv')]
+arq_csv.sort(key=lambda x: os.path.getmtime(os.path.join(diretorio, x)))
+
+
+if arq_csv:
+    arquivo_path = os.path.join(diretorio, arq_csv[-1])
+
+    df = pd.read_csv(arquivo_path, encoding='utf-8')
+    
+    df['Valor'] = df['Valor'].str.replace(r'[^0-9.,]','', regex=True)
+    df['Valor'] = df['Valor'].str.replace(',', '.', regex=True)
+    df['Valor'] = df['Valor'].astype(float)
+    df['Valor Pagamento'] = df['Valor Pagamento'].str.replace(r'[^0-9.,]','', regex=True)
+    df['Valor Pagamento'] = df['Valor Pagamento'].str.replace(',', '.', regex=True)
+    df['Valor Pagamento'] = df['Valor Pagamento'].astype(float)
+    df['Data Pagamento'] = pd.to_datetime(df['Data Pagamento'], format='%d/%m/%Y', errors='coerce')
+    df['Data Pagamento'] = df['Data Pagamento'].fillna(pd.to_datetime('1901-01-01')).dt.date
+    df['Data Vencimento'] = pd.to_datetime(df['Data Vencimento'], format='%d/%m/%Y', errors='coerce').dt.date
+    df['Data Emissão'] = pd.to_datetime(df['Data Emissão'], format='%d/%m/%Y', errors='coerce').dt.date
+    df['Tipo Baixa'] = df['Tipo Baixa'].astype(str)
+    
+
+    alt_colunas = {
+        'Nosso Numero':'ID_BOLETO',
+        'Data Vencimento':'DATA_VENCIMENTO',
+        'Matrícula':'ID_ASSOCIADO',
+        'Valor':'VALOR',
+        'Data Pagamento':'DATA_PAGAMENTO',
+        'Valor Pagamento':'VALOR_PAGAMENTO',
+        'Data Emissão':'DATA_EMISSAO',
+        'Tipo Baixa':'TIPO_BAIXA',
+        'Situacao':'SITUACAO'
+    }
+    
+    df = df.rename(columns=alt_colunas)
+    
+alt_colunas = {
+    'Nosso Numero':'ID_BOLETO',
+    'Data Vencimento':'DATA_VENCIMENTO',
+    'Matrícula':'ID_ASSOCIADO',
+    'Valor':'VALOR_BOLETO',
+    'Data Pagamento':'DATA_PAGAMENTO',
+    'Valor Pagamento':'VALOR_PAGAMENTO',
+    'Data Emissão':'DATA_EMISSAO',
+    'Tipo Baixa':'TIPO_BAIXA',
+    'Situacao':'SITUACAO'
+}
+    
+df = df.rename(columns=alt_colunas)
+    
+import mysql.connector
+
+
+conn = mysql.connector.connect(
+    host='',
+    user='',
+    password='',
+    database=''
+)
+
+
+for _, row in df.iterrows():
+    cursor = conn.cursor()
+    sql = """
+    INSERT INTO DIM_BOLETOS_1 (ID_BOLETO, DATA_VENCIMENTO, ID_ASSOCIADO, VALOR_BOLETO, DATA_PAGAMENTO, VALOR_PAGAMENTO, DATA_EMISSAO, TIPO_BAIXA, SITUACAO) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON DUPLICATE KEY UPDATE
+    DATA_VENCIMENTO = VALUES(DATA_VENCIMENTO),
+    ID_ASSOCIADO = VALUES(ID_ASSOCIADO),
+    VALOR_BOLETO = VALUES(VALOR_BOLETO),
+    DATA_PAGAMENTO = VALUES(DATA_PAGAMENTO),
+    VALOR_PAGAMENTO = VALUES(VALOR_PAGAMENTO),
+    DATA_EMISSAO = VALUES(DATA_EMISSAO),
+    TIPO_BAIXA = VALUES(TIPO_BAIXA),
+    SITUACAO = VALUES(SITUACAO)
+    """
+    
+    valores = tuple(row)
+    
+    cursor.execute(sql, valores)
+
+    conn.commit()
+    cursor.close()
+
+conn.close()
+>>>>>>> b63069b19d70776ab6addb49f2971b9fb9bf42ad
